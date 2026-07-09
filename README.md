@@ -1,7 +1,7 @@
 # SEL0433_projeto_1
 Implementaçõ de um controlador de motor rotativo usando o microcontrolador 8051
 
-### Checkpoint 1 - Leitura de Botões, Acionamento de LEDs e Display de 7 Segmentos
+## Checkpoint 1 - Leitura de Botões, Acionamento de LEDs e Display de 7 Segmentos
 
 ##  Mapeamento de Hardware
 O desenvolvimento e a validação do firmware foram conduzidos através do simulador computacional **EdSim51**, respeitando a seguinte distribuição de pinos:
