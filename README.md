@@ -82,3 +82,76 @@ No vídeo abaixo temos a simulação do código no EdSim
 
 https://github.com/user-attachments/assets/1afccf6c-280c-4573-822f-aa99954aebbe
 
+## Checkpoint 3 - Contagem de voltas com o timer
+
+## Mapeamento de Hardware
+
+* Entradas (Sensor de pulsos): O sensor de rotação do motor está fisicamente mapeado no pino P3.5, que atua como a entrada de clock externo para o Timer 1 do 8051.
+* Entradas (Chave de controle): Mapeado no pino P2.0 (chave SW0) para inversão de sentido.
+* Saídas (Display de 7 Segmentos): Conectado à Porta 1 (P1.0 a P1.7), operando com lógica invertida de Ânodo Comum.
+* Saídas (Motor DC): Conectado à Porta 3, utilizando os pinos P3.0 e P3.1 para controle direcional.
+
+---
+
+## Arquitetura do Código e Fluxo de Execução
+
+1. Configuração do Hardware (INICIO): O registrador TMOD é configurado com o byte 01010000B (50H). Isso ativa o Timer 1 e ajusta o bit C/T (Counter/Timer) para nível lógico 1, transformando o periférico em um contador que incrementa a cada pulso de descida gerado pelo sensor no pino P3.5. A contagem é iniciada habilitando o bit TR1.
+2. Laço Principal (LOOP_PRINCIPAL): O programa mantém a chamada contínua da sub-rotina de direção do motor (VERIFICA_CHAVE), garantindo que o sistema continue respondendo instantaneamente às ações do operador.
+3. Leitura do Processo: Em cada ciclo, o valor atual dos pulsos do motor é capturado a partir da parte baixa do temporizador (registrador TL1).
+4. Teste de Limite: Para garantir a visualização correta da interface, o valor lido é comparado com o número 10. Se a contagem atingir esse limite, o registrador TL1 é forçadamente zerado pelo software.
+5. Atualização do Display: O valor estabilizado da variável de processo é usado como índice de busca na memória de programa (DPTR e MOVC). O padrão de segmentos correspondente é enviado à porta P1.
+
+---
+
+## Instruções Principais
+
+* MOV TMOD, #01010000B: Configura a arquitetura interna do 8051 para que o Timer 1 atue como contador de eventos. Em vez de contar ciclos de máquina internos, ele passa a monitorar os eventos do motor.
+* SETB TR1: Habilita o funcionamento do temporizador, permitindo o registro dos pulsos lidos pelo sensor.
+* MOV A, TL1: Captura o valor instantâneo do contador de eventos. O registrador TL1 atua na prática como a nossa variável de processo.
+* CJNE A, #10, TARGET: Compara o valor acumulado com a constante 10. É a instrução lógica responsável por criar o limite de contagem, impedindo que o display apague ao tentar ler endereços de memória não mapeados na tabela de 0 a 9.
+* MOVC A, @A+DPTR: Utiliza o valor da contagem (agora limitado de 0 a 9) para indexar a tabela na memória de código e retornar o byte correspondente para acender o display.
+
+---
+## Resultado 
+
+No vídeo abaixo temos a simulação do código no EdSim
+
+https://github.com/user-attachments/assets/44ac97c5-1d02-4f25-9385-c614125fb9cf
+
+## Entrega Final
+
+## Mapeamento de Hardware
+
+* Entradas (Sensor de pulsos): O sensor de rotação do motor está fisicamente mapeado no pino P3.5 (clock externo).
+* Entradas (Chave de controle): Mapeado no pino P2.0 (chave SW0) para inversão de sentido.
+* Saídas (Display de 7 Segmentos): Conectado à Porta 1 (P1.0 a P1.7), operando com lógica invertida de Ânodo Comum. O bit P1.7 (Ponto Decimal) agora é utilizado como indicador visual do sentido de rotação.
+* Saídas (Motor DC): Conectado à Porta 3, utilizando os pinos P3.0 e P3.1 para controle direcional.
+
+---
+
+## Arquitetura do Código e Fluxo de Execução
+
+1. Configuração de Interrupções (INICIO): O Timer 1 foi reconfigurado para o Modo 2 (Auto-reload de 8 bits) com o valor inicial FFH. Isso garante que a cada pulso recebido do motor, o contador estoure imediatamente e acione o vetor de interrupção do Timer 1 (endereço 001BH). As chaves de interrupção EA e ET1 são ativadas.
+2. Rotina de Serviço de Interrupção (ISR): O incremento da variável de processo (R0) e a comparação de limite (CJNE A, #10) ocorrem de forma invisível em segundo plano. O laço principal fica dedicado exclusivamente a ler a chave e atualizar a interface gráfica.
+3. Reset Controlado: Uma sub-rotina específica (ROTINA_RESET) foi criada para desligar o timer, zerar a contagem e reiniciar o sistema. Ela é acionada em duas situações: automaticamente quando a contagem atinge 10 eventos, e forçadamente sempre que o operador inverte o sentido do motor.
+4. Sinalização Visual Integrada: O estado da variável de direção (F0) é copiado diretamente para o bit 7 do Acumulador antes do envio à porta P1. Isso faz com que o Ponto Decimal do display acenda em um sentido e apague no outro, fornecendo feedback instantâneo.
+
+---
+
+## Instruções Principais
+
+* ORG 001BH: Define o endereço absoluto do vetor de interrupção do Timer 1 na memória de programa. Quando o timer estoura, o hardware desvia a execução automaticamente para este ponto.
+* PUSH e POP: Instruções de manipulação da pilha (Stack) utilizadas na ISR para salvar e restaurar o contexto do Acumulador, evitando corromper dados do laço principal.
+* RETI: (Return from Interrupt) Finaliza a rotina de interrupção, informando ao hardware que o atendimento foi concluído e retornando ao fluxo original.
+* MOV ACC.7, C: Realiza a injeção direta do valor da flag Carry (que recebeu o estado de F0) no bit mais significativo do Acumulador, controlando o LED do Ponto Decimal sem alterar os demais segmentos do número exibido.
+
+---
+## Resultado 
+
+No vídeo abaixo temos a simulação do código no EdSim.
+
+
+https://github.com/user-attachments/assets/a51cd2ae-82aa-4490-9b91-7bb3c801fffc
+
+
+
